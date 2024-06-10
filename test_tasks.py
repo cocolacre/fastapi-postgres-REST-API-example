@@ -102,3 +102,32 @@ def test_create_get_update_delete_task():
         print("Error deleting task:", response.status_code,response.text)
     assert response.status_code == 204
     
+def test_http_errors_get_task_404():
+    url = "http://127.0.0.1:8000/tasks/9999999/"
+    headers = {"Content-Type": "application/json"}
+    resp = requests.get(url, headers=headers)
+    assert resp.status_code == 404
+    print(resp.json())
+
+def test_http_errors_create_task_400():
+    url = "http://127.0.0.1:8000/tasks/"
+    task_data = {
+                "title": "Deleteme",
+                "description": "This task should not persist in database.",
+                "status": "pending",
+                }
+    headers = {"Content-Type": "application/json"}    
+    response = requests.post(url, json=task_data, headers=headers)
+    #print("[1]test_http_errors_create_task_400", response.status_code)
+    assert response.status_code == 201, "Should have returned 201 status."
+    task_id = response.json()['id']
+    task_data = {
+                "id" : task_id,
+                "title": "Task with same id to create.",
+                "description": "This task should not be created.",
+                "status": "pending",
+                }
+    headers = {"Content-Type": "application/json"}    
+    response = requests.post(url, json=task_data, headers=headers)
+    #print("[2]test_http_errors_create_task_400", response.status_code)
+    assert response.status_code == 400, "Should have returned 400 status."
